@@ -44,6 +44,7 @@ export function useWebSocket() {
               text: data.text,
               timestamp: data.timestamp,
               confidence: data.confidence,
+              source: data.source || 'user',  // Default to "user" if not specified
               id: `${data.timestamp}-${Date.now()}`
             }
             setTranscripts(prev => [transcript, ...prev].slice(0, MAX_TRANSCRIPTS))

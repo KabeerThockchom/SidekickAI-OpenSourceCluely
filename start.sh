@@ -1,9 +1,9 @@
 #!/bin/bash
-# Startup script for Real-time Speech-to-Text (Organized Backend)
+# SidekickAI Startup Script
 
 echo "======================================================================"
-echo "Real-time Speech-to-Text with AI Question Detection System"
-echo "React Frontend with Liquid Glass Effects"
+echo "                         SidekickAI                                  "
+echo "         Your Intelligent AI Listening & Answering Companion         "
 echo "======================================================================"
 echo ""
 
@@ -26,6 +26,33 @@ else
         fi
     fi
 fi
+
+# Check audio configuration
+echo ""
+echo "Audio Configuration:"
+echo "-------------------"
+if [ -f "backend/config/settings.py" ]; then
+    # Extract audio settings
+    ENABLE_SYSTEM=$(grep "ENABLE_SYSTEM_AUDIO" backend/config/settings.py | grep -v "^#" | tail -1 | awk '{print $NF}')
+    MIC_DEVICE=$(grep "MICROPHONE_DEVICE" backend/config/settings.py | grep -v "^#" | tail -1 | awk -F'"' '{print $2}')
+    SYS_DEVICE=$(grep "SYSTEM_AUDIO_DEVICE" backend/config/settings.py | grep -v "^#" | tail -1 | awk -F'"' '{print $2}')
+
+    echo "🎤 Microphone: Device ${MIC_DEVICE}"
+
+    if [[ "$ENABLE_SYSTEM" == "True" ]]; then
+        echo "🖥️  System Audio: ENABLED (Device ${SYS_DEVICE})"
+        echo ""
+        echo "💡 Tip: Make sure your Multi-Output Device is set as system output!"
+        echo "   (Hold Option + Click Sound icon in menu bar)"
+    else
+        echo "🖥️  System Audio: DISABLED"
+        echo ""
+        echo "💡 To enable system audio capture:"
+        echo "   1. See SYSTEM_AUDIO_SETUP_MAC.md for setup"
+        echo "   2. Set ENABLE_SYSTEM_AUDIO=True in backend/config/settings.py"
+    fi
+fi
+echo ""
 
 # Check if React build exists
 if [ ! -d "frontend/dist" ]; then
@@ -65,4 +92,4 @@ python3 run_transcription.py
 # Cleanup on exit
 kill $WEB_PID 2>/dev/null
 echo ""
-echo "✓ System stopped"
+echo "✓ SidekickAI stopped"

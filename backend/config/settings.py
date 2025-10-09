@@ -14,6 +14,13 @@ MIN_SPEECH_DURATION = 0.3
 MAX_SPEECH_DURATION = 30
 SILENCE_DURATION = 0.6
 
+# Audio Device Configuration (macOS avfoundation)
+# Run: ffmpeg -f avfoundation -list_devices true -i ""
+# to find your device indices
+MICROPHONE_DEVICE = ":2"  # MacBook Pro Microphone
+SYSTEM_AUDIO_DEVICE = ":1"  # BlackHole 2ch (system audio)
+ENABLE_SYSTEM_AUDIO = True  # Set to True to enable system audio capture
+
 # VAD Configuration
 VAD_THRESHOLD = 0.5
 

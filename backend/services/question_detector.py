@@ -22,11 +22,12 @@ class QuestionDetector:
         self.transcript_history = []
         self.detected_questions = set()  # Track detected questions to avoid duplicates
 
-    def add_transcript(self, text: str, timestamp: str):
-        """Add new transcript line to history"""
+    def add_transcript(self, text: str, timestamp: str, source: str = "user"):
+        """Add new transcript line to history with source label"""
         self.transcript_history.append({
             "text": text,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "source": source  # "user" for microphone, "system" for system audio
         })
         # Keep last 20 lines for context
         if len(self.transcript_history) > 20:
@@ -42,20 +43,20 @@ class QuestionDetector:
         normalized = " ".join(normalized.split())  # Normalize whitespace
         return normalized.strip()
 
-    def detect_question(self, new_text: str, timestamp: str) -> Optional[Dict]:
+    def detect_question(self, new_text: str, timestamp: str, source: str = "user") -> Optional[Dict]:
         """
-        Detect if the NEW transcript line contains a question using GPT-5 Nano with minimal reasoning
+        Detect if the NEW transcript line contains a question using GPT-5 Nano with medium reasoning
         Only detects from the CURRENT line, uses history as context only
         Returns: {"question": str, "timestamp": str} or None
         """
-        # Add to history
-        self.add_transcript(new_text, timestamp)
+        # Add to history with source label
+        self.add_transcript(new_text, timestamp, source)
 
         # Build context from recent history (including more lines for better context)
         # Use last 10 lines (excluding the latest) to help form complete questions
         context_lines = self.transcript_history[-11:-1] if len(self.transcript_history) > 1 else []
         context = "\n".join([
-            f"[{item['timestamp']}] {item['text']}"
+            f"[{item['timestamp']}] {'[SYSTEM]' if item.get('source') == 'system' else '[USER]'} {item['text']}"
             for item in context_lines
         ]) if context_lines else "No previous context"
 
@@ -68,11 +69,13 @@ class QuestionDetector:
 PREVIOUSLY DETECTED (don't repeat these):
 {detected_context}
 
-CONVERSATION HISTORY:
+CONVERSATION HISTORY (labeled by speaker):
 {context}
 
 LATEST LINE:
-{new_text}
+{'[SYSTEM]' if source == 'system' else '[USER]'} {new_text}
+
+NOTE: [USER] = microphone input from user, [SYSTEM] = system audio (meetings, videos, etc.)
 
 INSTRUCTIONS:
 1. Look at the ENTIRE conversation (all lines above) to find complete questions

@@ -36,26 +36,36 @@ export function TranscriptPanel({ transcripts }: TranscriptPanelProps) {
               <p className="text-sm">No transcripts yet</p>
             </div>
           ) : (
-            transcripts.map((transcript, index) => (
-              <div
-                key={transcript.id || `${transcript.timestamp}-${index}`}
-                className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
-              >
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xs font-medium text-gray-500">
-                    {transcript.timestamp}
-                  </span>
-                  {transcript.confidence !== null && transcript.confidence !== undefined && (
-                    <span className="text-xs text-gray-600 font-medium">
-                      {Math.round(transcript.confidence * 100)}%
+            transcripts.map((transcript, index) => {
+              const isSystem = transcript.source === 'system'
+              return (
+                <div
+                  key={transcript.id || `${transcript.timestamp}-${index}`}
+                  className={`p-3 rounded-lg border transition-colors ${
+                    isSystem
+                      ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
+                      : 'bg-gray-50 border-gray-100 hover:border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={`text-xs font-semibold ${isSystem ? 'text-blue-700' : 'text-gray-500'}`}>
+                      {isSystem ? '🖥️ System' : '🎤 You'}
                     </span>
-                  )}
+                    <span className="text-xs font-medium text-gray-500">
+                      {transcript.timestamp}
+                    </span>
+                    {transcript.confidence !== null && transcript.confidence !== undefined && (
+                      <span className="text-xs text-gray-600 font-medium">
+                        {Math.round(transcript.confidence * 100)}%
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-sm leading-relaxed ${isSystem ? 'text-blue-900' : 'text-gray-900'}`}>
+                    {transcript.text}
+                  </p>
                 </div>
-                <p className="text-sm text-gray-900 leading-relaxed">
-                  {transcript.text}
-                </p>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </CardContent>

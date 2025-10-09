@@ -17,12 +17,12 @@ export function Header({ status, onReconnect, onStartRecording }: HeaderProps) {
         <div className="flex items-center justify-between">
           {/* Left: Logo and Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
               <SpeakerLoudIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Live Transcription</h1>
-              <p className="text-xs text-gray-500">Real-time speech-to-text with AI</p>
+              <h1 className="text-lg font-bold text-gray-900">SidekickAI</h1>
+              <p className="text-xs text-gray-500">Your intelligent AI companion</p>
             </div>
           </div>
 

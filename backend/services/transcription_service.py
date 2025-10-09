@@ -24,7 +24,8 @@ sys.path.insert(0, str(backend_path))
 from config.settings import (
     SAMPLE_RATE, CHUNK_DURATION, MIN_SPEECH_DURATION,
     MAX_SPEECH_DURATION, SILENCE_DURATION, WHISPER_MODEL,
-    VAD_THRESHOLD, WEB_SERVER_URL
+    VAD_THRESHOLD, WEB_SERVER_URL, MICROPHONE_DEVICE,
+    SYSTEM_AUDIO_DEVICE, ENABLE_SYSTEM_AUDIO
 )
 from utils.vad import get_vad
 
@@ -37,13 +38,14 @@ is_recording = True
 transcription_queue = queue.Queue()
 
 
-def send_to_web_server(text, timestamp, confidence=None):
-    """Send transcript to web server"""
+def send_to_web_server(text, timestamp, confidence=None, source="user"):
+    """Send transcript to web server with source label (user or system)"""
     try:
         data = {
             "text": text,
             "timestamp": timestamp,
-            "confidence": confidence
+            "confidence": confidence,
+            "source": source  # "user" for microphone, "system" for system audio
         }
         requests.post(f"{WEB_SERVER_URL}/transcript", json=data, timeout=2)
     except Exception as e:
@@ -62,7 +64,13 @@ def transcription_worker():
             if audio_data is None:
                 break
 
-            audio_bytes, speech_duration = audio_data
+            # Unpack audio data with source label
+            if len(audio_data) == 3:
+                audio_bytes, speech_duration, source = audio_data
+            else:
+                # Backward compatibility - default to "user"
+                audio_bytes, speech_duration = audio_data
+                source = "user"
 
             print("✍️  Transcribing...   ", end='\r')
             sys.stdout.flush()
@@ -113,15 +121,16 @@ def transcription_worker():
                         if confidences:
                             confidence = 1.0 - (sum(confidences) / len(confidences))
 
-                    # Display locally
+                    # Display locally with source label
+                    source_icon = "🖥️ " if source == "system" else "🎤"
                     if confidence is not None:
-                        print(f"📝 [{time_str}] ({confidence:.0%}) {text}                    ")
+                        print(f"{source_icon} [{time_str}] ({confidence:.0%}) {text}                    ")
                     else:
-                        print(f"📝 [{time_str}] {text}                    ")
+                        print(f"{source_icon} [{time_str}] {text}                    ")
                     sys.stdout.flush()
 
-                    # Send to web server for question detection
-                    send_to_web_server(text, time_str, confidence)
+                    # Send to web server for question detection with source label
+                    send_to_web_server(text, time_str, confidence, source)
 
             except Exception as e:
                 print(f"❌ Transcription error: {e}        ")
@@ -137,22 +146,27 @@ def transcription_worker():
             print(f"❌ Worker error: {e}", file=sys.stderr)
 
 
-def capture_audio():
-    """Captures audio and uses VAD for speech detection"""
-    print("Initializing...")
+def capture_audio_stream(device_index: str, source: str, label: str):
+    """
+    Generic audio capture function for any audio device
+
+    Args:
+        device_index: ffmpeg device index (e.g., ':1' for mic, ':2' for system)
+        source: "user" or "system" for labeling
+        label: Display label (e.g., "🎤 Microphone", "🖥️  System Audio")
+    """
+    print(f"Initializing {label}...")
 
     # Initialize VAD
     vad = get_vad(VAD_THRESHOLD)
 
-    print("🎤 Listening continuously... Speak naturally.\n")
-    print("🌐 Sending transcripts to web interface at http://localhost:8000\n")
-    print("=" * 70)
+    print(f"{label} listening...\n")
 
     # Start ffmpeg process
     ffmpeg_cmd = [
         'ffmpeg',
         '-f', 'avfoundation',
-        '-i', ':1',  # MacBook Pro Microphone
+        '-i', device_index,
         '-ar', str(SAMPLE_RATE),
         '-ac', '1',
         '-f', 's16le',
@@ -175,7 +189,7 @@ def capture_audio():
         silence_start = None
         speech_start_time = None
 
-        print("💤 Waiting for speech...", end='\r')
+        print(f"{label} 💤 Waiting for speech...", end='\r')
         sys.stdout.flush()
 
         while is_recording:
@@ -187,7 +201,7 @@ def capture_audio():
             try:
                 speech_detected, speech_prob = vad.is_speech(audio_chunk)
             except Exception as e:
-                print(f"VAD error: {e}", file=sys.stderr)
+                print(f"{label} VAD error: {e}", file=sys.stderr)
                 speech_detected = False
                 speech_prob = 0.0
 
@@ -195,7 +209,7 @@ def capture_audio():
                 if not is_speaking:
                     is_speaking = True
                     speech_start_time = time.time()
-                    print(f"🗣️  Speaking... (confidence: {speech_prob:.0%})       ", end='\r')
+                    print(f"{label} 🗣️  Speaking... (confidence: {speech_prob:.0%})       ", end='\r')
                     sys.stdout.flush()
 
                 speech_buffer.append(audio_chunk)
@@ -213,13 +227,13 @@ def capture_audio():
 
                     remaining = SILENCE_DURATION - silence_duration
                     if remaining > 0:
-                        print(f"⏸️  Pause detected... ({remaining:.1f}s)       ", end='\r')
+                        print(f"{label} ⏸️  Pause detected... ({remaining:.1f}s)       ", end='\r')
                         sys.stdout.flush()
 
                     if silence_duration >= SILENCE_DURATION or speech_duration >= MAX_SPEECH_DURATION:
                         if len(speech_buffer) > 0 and speech_duration >= MIN_SPEECH_DURATION:
                             full_audio = b''.join(speech_buffer)
-                            transcription_queue.put((full_audio, speech_duration))
+                            transcription_queue.put((full_audio, speech_duration, source))
 
                             print(f"📋 Queued for transcription ({speech_duration:.1f}s)    ", end='\r')
                             sys.stdout.flush()
@@ -250,6 +264,15 @@ def main():
     print(f"  - Silence detection: {SILENCE_DURATION}s")
     print(f"  - Min speech: {MIN_SPEECH_DURATION}s")
     print(f"  - Max speech: {MAX_SPEECH_DURATION}s")
+
+    # Audio sources
+    print(f"\nAudio Sources:")
+    print(f"  🎤 Microphone: {MICROPHONE_DEVICE}")
+    if ENABLE_SYSTEM_AUDIO:
+        print(f"  🖥️  System Audio: {SYSTEM_AUDIO_DEVICE} (ENABLED)")
+    else:
+        print(f"  🖥️  System Audio: DISABLED (set ENABLE_SYSTEM_AUDIO=True to enable)")
+
     print(f"\n👉 Open {WEB_SERVER_URL} in your browser to see the web interface")
     print(f"\nPress Ctrl+C to stop\n")
 
@@ -257,12 +280,32 @@ def main():
     transcription_thread = threading.Thread(target=transcription_worker, daemon=True)
     transcription_thread.start()
 
-    # Start audio capture thread
-    capture_thread = threading.Thread(target=capture_audio, daemon=True)
-    capture_thread.start()
+    # Start microphone capture thread
+    mic_thread = threading.Thread(
+        target=capture_audio_stream,
+        args=(MICROPHONE_DEVICE, "user", "🎤 Microphone"),
+        daemon=True
+    )
+    mic_thread.start()
+
+    # Start system audio capture thread if enabled
+    system_thread = None
+    if ENABLE_SYSTEM_AUDIO:
+        system_thread = threading.Thread(
+            target=capture_audio_stream,
+            args=(SYSTEM_AUDIO_DEVICE, "system", "🖥️  System Audio"),
+            daemon=True
+        )
+        system_thread.start()
 
     try:
-        capture_thread.join()
+        # Wait for microphone thread
+        mic_thread.join()
+
+        # Wait for system audio thread if running
+        if system_thread:
+            system_thread.join()
+
     except KeyboardInterrupt:
         print("\n\n🛑 Stopping...")
         is_recording = False

@@ -2,6 +2,7 @@ export interface Transcript {
   text: string
   timestamp: string
   confidence?: number
+  source?: 'user' | 'system'  // "user" for microphone, "system" for system audio
   id?: string
 }
 
@@ -24,6 +25,7 @@ export interface WebSocketMessage {
   text?: string
   timestamp?: string
   confidence?: number
+  source?: 'user' | 'system'
   question?: string
   context?: string
   answer?: string

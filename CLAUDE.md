@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Project Overview - SidekickAI
 
-Real-time speech-to-text system with AI-powered question detection and answering. Captures audio from microphone, transcribes using MLX Whisper (Apple Silicon optimized), detects questions with OpenAI GPT-5 Nano, and displays everything through a React frontend with liquid glass effects.
+SidekickAI is an intelligent real-time speech-to-text system with AI-powered question detection and answering. Captures audio from both microphone and system audio (YouTube, Zoom, etc.), transcribes using MLX Whisper (Apple Silicon optimized), detects questions with OpenAI GPT-5 Nano, and displays everything through a modern React frontend.
 
 ## Core Architecture
 
@@ -133,13 +133,10 @@ All clients receive same updates (no per-client filtering):
 - Answers broadcast when generated
 - Frontend maintains last 20 transcripts, 10 questions, 10 answers
 
-### Frontend Architecture (React + Liquid Glass)
-- **Components**: StatusIndicator, TranscriptPanel, QuestionsPanel, AnswersPanel
+### Frontend Architecture (React)
+- **Components**: Header, TranscriptPanel, QuestionsPanel, QAChatPanel, ConnectionError
 - **State Management**: useWebSocket custom hook manages WebSocket connection and data
-- **Liquid Glass**: Each component uses different `liquid-glass-react` settings:
-  - `displacementScale`: Refraction intensity (40-70)
-  - `elasticity`: "Liquid" feel (0.15-0.35)
-  - `blurAmount`: Frosting level (0.05-0.1)
+- **Styling**: Tailwind CSS for clean, modern UI
 - **WebSocket Protocol**: JSON messages with `type` field (transcript/question/answer)
 
 ## Import Path Pattern
@@ -220,6 +217,6 @@ from utils.vad import get_vad
 - No GPU needed, runs on Neural Engine
 - Much faster than CPU-only Whisper on M1/M2/M3
 
-**Browser Compatibility** (liquid glass effects):
+**Browser Compatibility**:
 - Chrome/Edge: Full support (recommended)
-- Safari/Firefox: Partial support (no displacement effects)
+- Safari/Firefox: Full support

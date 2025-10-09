@@ -1,16 +1,16 @@
-# React Frontend with Liquid Glass Effects
+# SidekickAI - React Frontend
 
-Modern React frontend for the Real-time Speech-to-Text system featuring stunning Apple-style liquid glass effects.
+Modern React frontend for SidekickAI featuring a clean, professional interface with real-time updates.
 
 ## ✨ Features
 
-- **🎨 Liquid Glass UI** - Apple's glassmorphism effects using [liquid-glass-react](https://github.com/rdev/liquid-glass-react)
+- **🎨 Modern UI** - Clean, professional design with Tailwind CSS
 - **⚡ Real-time Updates** - WebSocket integration for instant transcripts, questions, and answers
 - **📱 Responsive Design** - Works beautifully on desktop and mobile
-- **🎭 Smooth Animations** - Slide-in, pop-in, and fade effects for all content
+- **🎭 Smooth Animations** - Polished animations for all content
 - **💪 TypeScript** - Fully typed for excellent developer experience
 - **🎯 Auto-reconnect** - Automatic WebSocket reconnection with visual feedback
-- **🔍 Lucide Icons** - Beautiful, consistent iconography
+- **🎨 Radix UI Icons** - Beautiful, consistent iconography
 
 ## 🚀 Quick Start
 
@@ -62,15 +62,16 @@ src/
 
 ## 🎨 Component Details
 
-### StatusIndicator
-- Shows connection status (Connected/Disconnected/Reconnecting)
-- Pulsing green dot when connected
-- Spinning icon during reconnection
-- Displays reconnection attempt count
+### Header
+- SidekickAI branding with gradient logo
+- Connection status indicator
+- Reconnect button when disconnected
+- Clean, professional design
 
 ### TranscriptPanel
 - Displays up to 20 most recent transcripts
 - Shows confidence scores with visual indicators
+- Source labels (🎤 microphone, 🖥️ system audio)
 - Auto-scrolls to newest content
 - Empty state with helpful message
 
@@ -80,10 +81,10 @@ src/
 - Visual feedback on click
 - Hover effects for better UX
 
-### AnswersPanel
+### QAChatPanel
 - Displays up to 10 most recent answers
 - Shows question and answer together
-- Beautiful question/answer formatting with icons
+- Beautiful question/answer formatting
 - Timestamps for each answer
 
 ## 🔧 Configuration
@@ -103,37 +104,19 @@ src/
 - React 19 JSX transform
 - Path aliases configured
 
-## 🎭 Liquid Glass Effects
+## 🎨 Styling System
 
-Each component uses different liquid glass settings for visual variety:
+### Tailwind Configuration
+- Custom color palette with purple/blue gradients
+- Custom animations (slide-in, fade-in, pulse)
+- Responsive breakpoints for all screen sizes
+- Clean, modern design tokens
 
-### Header
-```typescript
-displacementScale: 65
-elasticity: 0.28
-aberrationIntensity: 2.8
-```
-
-### Panels (Transcripts, Questions, Answers)
-```typescript
-displacementScale: 58
-elasticity: 0.22
-aberrationIntensity: 2.2
-```
-
-### Cards (Individual items)
-```typescript
-displacementScale: 38-48
-elasticity: 0.12-0.32
-aberrationIntensity: 1-2
-```
-
-### Status Indicator
-```typescript
-displacementScale: 35
-elasticity: 0.18
-aberrationIntensity: 1.2
-```
+### Design Tokens
+- Primary gradient: purple-600 → blue-600
+- Background: gray-50
+- Card backgrounds: white with subtle shadows
+- Text hierarchy: gray-900, gray-600, gray-500
 
 ## 🌐 WebSocket Protocol
 
@@ -184,32 +167,16 @@ POST /answer
 
 Response is broadcast via WebSocket to all clients.
 
-## 🎨 Styling
-
-### Gradient Background
-Beautiful purple gradient: `#667eea` → `#764ba2` → purple-900
-
-### Custom Scrollbars
-- Thin, semi-transparent scrollbars
-- Smooth hover effects
-- Matches glass aesthetic
-
-### Animations
-- **slide-in**: Transcripts slide from left (0.3s)
-- **pop-in**: Questions/answers scale up (0.4s with bounce)
-- **fade-in**: General fade effects (0.2s)
-- **pulse-slow**: Status indicator (2s infinite)
-
 ## 🌍 Browser Compatibility
 
 | Browser | Support | Notes |
 |---------|---------|-------|
-| Chrome | ✅ Full | Recommended - full displacement effects |
-| Edge | ✅ Full | Full support including displacement |
-| Safari | ⚠️ Partial | No displacement, blur/frost only |
-| Firefox | ⚠️ Partial | No displacement, blur/frost only |
+| Chrome | ✅ Full | Recommended |
+| Edge | ✅ Full | Full support |
+| Safari | ✅ Full | Full support |
+| Firefox | ✅ Full | Full support |
 
-**Best experience**: Chrome or Edge
+**Works great in all modern browsers!**
 
 ## 🛠️ Development Tips
 
@@ -237,8 +204,9 @@ Check browser console for WebSocket connection logs:
 
 ### Production
 - **react** & **react-dom** (^19.0.0) - UI framework
-- **liquid-glass-react** (^1.1.1) - Liquid glass effects
-- **lucide-react** (^0.263.1) - Icon library
+- **@radix-ui/react-icons** - Icon library
+- **class-variance-authority** & **clsx** - Component variants
+- **tailwind-merge** - Tailwind utility merging
 
 ### Development
 - **vite** - Fast build tool
@@ -257,10 +225,10 @@ The production build is served by the FastAPI backend:
 
 ## 💡 Tips
 
-1. **Adjust Glass Effects**: Modify `displacementScale`, `elasticity`, and `aberrationIntensity` in components
-2. **Change Colors**: Update `tailwind.config.js` color palette
-3. **Modify Animations**: Edit keyframes in `tailwind.config.js`
-4. **Limit Items**: Change MAX_TRANSCRIPTS, MAX_QUESTIONS, MAX_ANSWERS in `useWebSocket.ts`
+1. **Change Colors**: Update `tailwind.config.js` color palette
+2. **Modify Animations**: Edit keyframes in `tailwind.config.js`
+3. **Limit Items**: Change MAX_TRANSCRIPTS, MAX_QUESTIONS, MAX_ANSWERS in `useWebSocket.ts`
+4. **Customize Components**: Edit component styles in `src/components/`
 
 ## 🐛 Troubleshooting
 
@@ -269,15 +237,15 @@ The production build is served by the FastAPI backend:
 - Verify `/ws` endpoint is accessible
 - Look for CORS issues in console
 
-**Liquid glass not working:**
-- Use Chrome or Edge for full effects
-- Check for JavaScript errors
-- Verify liquid-glass-react is installed
-
 **Build fails:**
 - Run `npm install` to ensure all dependencies
 - Check TypeScript errors with `npm run lint`
 - Clear node_modules and reinstall if needed
+
+**UI issues:**
+- Check browser console for errors
+- Verify all dependencies are installed
+- Try clearing browser cache
 
 ## 📝 License
 

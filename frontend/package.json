@@ -1,7 +1,7 @@
 {
-  "name": "realtime-speech2text-frontend",
+  "name": "sidekickai-frontend",
   "version": "1.0.0",
-  "description": "React frontend for Real-time Speech-to-Text with AI Question Detection",
+  "description": "SidekickAI - Your intelligent AI assistant that listens, transcribes, and answers questions in real-time",
   "private": true,
   "type": "module",
   "scripts": {

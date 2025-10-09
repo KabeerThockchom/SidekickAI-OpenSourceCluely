@@ -1,10 +1,11 @@
-# Real-time Speech-to-Text with AI Question Detection
+# SidekickAI
 
-An intelligent real-time transcription system that automatically detects questions and provides instant answers using AI.
+Your intelligent AI assistant that listens, transcribes, and answers questions in real-time.
 
 ## Features
 
 - 🎤 **Real-time Speech-to-Text** - Continuous transcription using MLX Whisper
+- 🖥️ **System Audio Capture** - Capture both microphone AND system audio (YouTube, Zoom, etc.)
 - 🧠 **Silero VAD** - Advanced voice activity detection for accurate pause detection
 - ❓ **AI Question Detection** - Automatically identifies questions in the transcript
 - 💬 **Instant Answers** - Get answers to detected questions with one click
@@ -15,11 +16,16 @@ An intelligent real-time transcription system that automatically detects questio
 ## System Architecture
 
 ```
-┌─────────────────┐
-│   Microphone    │
-└────────┬────────┘
-         │
-         ├──> Audio Capture (ffmpeg)
+┌─────────────────┐     ┌─────────────────┐
+│   Microphone    │     │  System Audio   │
+│      (🎤)       │     │  (🖥️  YouTube,  │
+│                 │     │   Zoom, etc.)   │
+└────────┬────────┘     └────────┬────────┘
+         │                       │
+         │                       │ (via BlackHole)
+         └───────────┬───────────┘
+                     │
+         ├──> Audio Capture (ffmpeg, parallel streams)
          │
          ├──> VAD (Silero/Energy-based)
          │
@@ -43,7 +49,7 @@ An intelligent real-time transcription system that automatically detects questio
              ▼
 ┌─────────────────────────────────┐
 │      Web Interface (HTML/JS)     │
-│  • Live Transcripts              │
+│  • Live Transcripts (labeled)    │
 │  • Detected Questions            │
 │  • AI Answers                    │
 └─────────────────────────────────┘
@@ -72,7 +78,7 @@ export OPENAI_API_KEY='your-openai-api-key-here'
 
 ### Option 1: Quick Start with Organized Backend (Recommended)
 
-Beautiful modern UI with Apple's liquid glass effect and organized backend structure.
+Modern React UI with organized backend structure.
 
 ```bash
 chmod +x start.sh
@@ -114,6 +120,11 @@ SILENCE_DURATION = 0.6
 MIN_SPEECH_DURATION = 0.3
 MAX_SPEECH_DURATION = 30
 
+# Audio devices (macOS)
+MICROPHONE_DEVICE = ":2"          # MacBook Pro Microphone
+SYSTEM_AUDIO_DEVICE = ":1"        # BlackHole 2ch
+ENABLE_SYSTEM_AUDIO = True        # Enable/disable system audio capture
+
 # VAD
 VAD_THRESHOLD = 0.5
 
@@ -123,6 +134,11 @@ OPENAI_MODEL = "gpt-5-nano"
 
 # Server
 WEB_SERVER_PORT = 8000
+```
+
+**Finding your audio device indices:**
+```bash
+ffmpeg -f avfoundation -list_devices true -i ""
 ```
 
 ### Legacy Configuration
@@ -152,49 +168,129 @@ model = "gpt-5-nano"  # Fast and accurate
 # Will upgrade to "gpt-5-nano" for even faster responses
 ```
 
-## System Audio Capture (Optional)
+## System Audio Capture
 
-To capture system audio in addition to microphone:
+Capture both your microphone AND system audio (YouTube, Zoom, music, etc.) simultaneously!
 
-### macOS Setup:
+### Quick Setup (macOS) - 5 Minutes
 
-1. **Install BlackHole** (virtual audio device):
+#### 1. Install BlackHole (if not already installed)
 ```bash
 brew install blackhole-2ch
 ```
 
-2. **Create Multi-Output Device:**
-   - Open Audio MIDI Setup
-   - Click "+" → Create Multi-Output Device
-   - Check: Built-in Output + BlackHole 2ch
-   - Set as system output
+#### 2. Create Multi-Output Device
 
-3. **Update audio device in code:**
-```python
-# In realtime_transcribe_web.py, line ~530
-'-i', ':1',  # Change to appropriate audio device index
-```
+**Open Audio MIDI Setup:**
+- Press `Cmd+Space` and type "Audio MIDI Setup"
+- Or go to `/Applications/Utilities/Audio MIDI Setup.app`
 
-Find device index:
+**Create the device:**
+1. Click the **+** button in the bottom-left corner
+2. Select **"Create Multi-Output Device"**
+3. In the right panel, check BOTH boxes:
+   - ☑ **MacBook Pro Speakers** (or your speakers)
+   - ☑ **BlackHole 2ch**
+4. **Important**: Set "Primary Device" dropdown to **"MacBook Pro Speakers"**
+5. Optionally rename to "Speakers + BlackHole"
+
+#### 3. Set as System Output
+
+**Option A: Menu Bar (Quick)**
+1. Hold `Option` key
+2. Click the 🔊 Sound icon in menu bar
+3. Select **"Multi-Output Device"** under Output Device
+
+**Option B: System Settings**
+1. Open System Settings → Sound → Output
+2. Select **"Multi-Output Device"**
+
+#### 4. Find Your Device Indices
+
+Run this command:
 ```bash
 ffmpeg -f avfoundation -list_devices true -i ""
 ```
 
+Look for:
+```
+[AVFoundation indev @ ...] AVFoundation audio devices:
+[AVFoundation indev @ ...] [1] BlackHole 2ch
+[AVFoundation indev @ ...] [2] MacBook Pro Microphone
+```
+
+#### 5. Update Configuration
+
+Edit `backend/config/settings.py` with your device indices:
+```python
+MICROPHONE_DEVICE = ":2"          # Your microphone index
+SYSTEM_AUDIO_DEVICE = ":1"        # BlackHole index
+ENABLE_SYSTEM_AUDIO = True        # Set to True
+```
+
+#### 6. Start the System!
+
+```bash
+./start.sh
+```
+
+**Test it:**
+- Play a YouTube video
+- Speak into your microphone
+- Watch the terminal and web interface:
+  - 🎤 for your voice (microphone)
+  - 🖥️ for system audio (YouTube, Zoom, etc.)
+
+### What's Happening?
+
+```
+┌──────────────────────────────────────┐
+│  Your Mac's Audio Output             │
+│                                      │
+│  ┌────────────────────────────┐     │
+│  │  Multi-Output Device       │     │
+│  │  ├─> MacBook Speakers ───────────┼──> 🔊 You hear audio
+│  │  └─> BlackHole 2ch ───────────────┼──> 📹 App captures it
+│  └────────────────────────────┘     │
+└──────────────────────────────────────┘
+```
+
+The Multi-Output Device routes audio to BOTH your speakers (so you can hear) AND BlackHole (so the app can capture it). Both streams are transcribed in parallel and labeled separately.
+
+### Troubleshooting
+
+**No system audio transcriptions:**
+- Verify Multi-Output Device is set as system output (check Sound icon in menu bar)
+- Ensure BOTH boxes are checked in Audio MIDI Setup
+- Make sure you're playing audio (YouTube, music, etc.)
+- Check `ENABLE_SYSTEM_AUDIO = True` in settings.py
+
+**Can't hear audio anymore:**
+- In Audio MIDI Setup, ensure "MacBook Pro Speakers" is checked
+- Verify "Primary Device" is set to your speakers, not BlackHole
+
+**To disable system audio capture:**
+```python
+# In backend/config/settings.py
+ENABLE_SYSTEM_AUDIO = False  # Just set to False
+```
+
+Or switch your system output back to "MacBook Pro Speakers" in Sound Settings.
+
+### Detailed Documentation
+
+See `SYSTEM_AUDIO_SETUP_MAC.md` for comprehensive troubleshooting and advanced setup options.
+
 ## Web Interface
 
-Two frontend options available:
-
-### React Frontend (Recommended)
-Beautiful modern interface with Apple's liquid glass effects:
-- ✨ **Liquid Glass UI** - Apple-style glassmorphism using [liquid-glass-react](https://github.com/rdev/liquid-glass-react)
-- 🔴 **Live Status Indicator** - Pulsing connection status
+### React Frontend
+Modern, clean interface with real-time updates:
+- 🔴 **Live Status Indicator** - Connection status at a glance
 - 📊 **Confidence Scores** - Real-time transcription accuracy
 - ⚡ **WebSocket Updates** - Instant real-time updates
-- 🎨 **Gradient Background** - Beautiful purple gradient
+- 🎨 **Clean Design** - Modern, professional interface
 - 📱 **Responsive Design** - Works on all devices
-- 🎭 **Smooth Animations** - Slide-in and pop-in effects
-
-**Best viewed in Chrome or Edge** (Safari/Firefox have partial liquid glass support)
+- 🎭 **Smooth Animations** - Polished user experience
 
 ### Original HTML Frontend
 Simple embedded interface with all core features:
@@ -214,7 +310,7 @@ Simple embedded interface with all core features:
 ## File Structure
 
 ```
-RealTime_Speech2Text/
+SidekickAI/
 ├── backend/                     # Organized backend code
 │   ├── api/
 │   │   └── server.py           # FastAPI web server
@@ -226,7 +322,7 @@ RealTime_Speech2Text/
 │   ├── config/
 │   │   └── settings.py         # Centralized configuration
 │   └── README.md               # Backend documentation
-├── frontend/                    # React frontend with liquid glass
+├── frontend/                    # React frontend
 │   ├── src/
 │   │   ├── components/         # React components
 │   │   ├── hooks/              # Custom React hooks
@@ -284,13 +380,18 @@ Legacy files:
 
 ## Future Enhancements
 
-- [ ] System audio capture integration
+- [x] System audio capture integration (✅ DONE!)
+- [x] Speaker diarization (✅ DONE!)
 - [ ] Multiple language support
 - [ ] Export transcripts to various formats
 - [ ] Custom question answering prompts
-- [ ] Speaker diarization
-- [ ] GPT-5 Nano integration when available
 - [ ] Local LLM support (Ollama integration)
+
+---
+
+## About SidekickAI
+
+**SidekickAI** is your intelligent companion that listens to everything you say and hear, transcribes it in real-time, automatically detects questions, and provides instant AI-powered answers. Perfect for meetings, lectures, research, or just capturing your thoughts.
 
 ## Credits
 
@@ -299,7 +400,6 @@ Built with:
 - [Silero VAD](https://github.com/snakers4/silero-vad) - Voice Activity Detection
 - [FastAPI](https://fastapi.tiangolo.com/) - Web framework
 - [OpenAI API](https://openai.com/) - Question detection & answering
-- [Liquid Glass React](https://github.com/rdev/liquid-glass-react) - Apple's liquid glass effect
 - [React](https://react.dev/) - Frontend framework
 - [Vite](https://vitejs.dev/) - Build tool
 - [Tailwind CSS](https://tailwindcss.com/) - CSS framework

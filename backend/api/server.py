@@ -90,11 +90,11 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 
-async def detect_question_async(text: str, timestamp: str):
+async def detect_question_async(text: str, timestamp: str, source: str = "user"):
     """Run question detection in background without blocking"""
     try:
-        # Run question detection (synchronous function)
-        question_data = await asyncio.to_thread(question_detector.detect_question, text, timestamp)
+        # Run question detection (synchronous function) with source label
+        question_data = await asyncio.to_thread(question_detector.detect_question, text, timestamp, source)
 
         if question_data:
             # Send detected question to frontend
@@ -112,22 +112,24 @@ async def detect_question_async(text: str, timestamp: str):
 async def receive_transcript(data: dict):
     """
     Receive transcript from the transcription service
-    Format: {"text": str, "timestamp": str, "confidence": float}
+    Format: {"text": str, "timestamp": str, "confidence": float, "source": str}
     """
     text = data.get("text", "")
     timestamp = data.get("timestamp", datetime.now().strftime("%H:%M:%S"))
     confidence = data.get("confidence")
+    source = data.get("source", "user")  # "user" or "system"
 
     # Send transcript to frontend IMMEDIATELY (non-blocking)
     await manager.broadcast({
         "type": "transcript",
         "text": text,
         "timestamp": timestamp,
-        "confidence": confidence
+        "confidence": confidence,
+        "source": source
     })
 
     # Run question detection in background without blocking the response
-    asyncio.create_task(detect_question_async(text, timestamp))
+    asyncio.create_task(detect_question_async(text, timestamp, source))
 
     # Return immediately without waiting for question detection
     return {"status": "ok"}
