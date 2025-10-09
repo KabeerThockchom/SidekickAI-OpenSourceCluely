@@ -1,0 +1,11 @@
+mlx
+mlx-whisper
+numpy
+torch
+torchaudio
+openai
+fastapi
+uvicorn[standard]
+websockets
+requests
+python-dotenv
