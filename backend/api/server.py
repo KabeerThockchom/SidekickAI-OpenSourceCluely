@@ -59,6 +59,22 @@ FRONTEND_EXISTS = os.path.exists(FRONTEND_BUILD_PATH)
 if FRONTEND_EXISTS:
     # Serve static files from React build
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_BUILD_PATH, "assets")), name="assets")
+
+    # Serve logo and favicon from root of dist
+    @app.get("/logo.png")
+    async def get_logo():
+        logo_path = os.path.join(FRONTEND_BUILD_PATH, "logo.png")
+        if os.path.exists(logo_path):
+            return FileResponse(logo_path)
+        return {"error": "Logo not found"}
+
+    @app.get("/favicon.ico")
+    async def get_favicon():
+        favicon_path = os.path.join(FRONTEND_BUILD_PATH, "favicon.ico")
+        if os.path.exists(favicon_path):
+            return FileResponse(favicon_path)
+        return {"error": "Favicon not found"}
+
     print(f"✓ Serving React frontend from {FRONTEND_BUILD_PATH}")
 else:
     print(f"⚠️  React build not found at {FRONTEND_BUILD_PATH}")
