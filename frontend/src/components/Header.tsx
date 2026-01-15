@@ -13,31 +13,35 @@ export function Header({ status, onReconnect, onStartRecording }: HeaderProps) {
 
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
-          {/* Left: Logo */}
-          <div className="flex items-center">
+          {/* Left: Logo and Title */}
+          <div className="flex items-center gap-3">
             <img
               src="/logo.png"
               alt="SidekickAI"
-              className="h-12 object-contain"
+              className="h-10 object-contain"
             />
+            <div className="border-l border-gray-200 pl-3">
+              <h1 className="text-lg font-semibold text-gray-900">Sales Engineer Copilot</h1>
+              <p className="text-xs text-gray-500">Real-time meeting assistant</p>
+            </div>
           </div>
 
           {/* Right: Status and Actions */}
           <div className="flex items-center gap-3">
             {/* Connection Status */}
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className="text-sm text-gray-600">
-                {isConnected ? 'Connected' : 'Disconnected'}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              <span className="text-xs font-medium text-gray-600">
+                {isConnected ? 'Live' : 'Offline'}
               </span>
             </div>
 
             {/* Reconnect Button */}
             {!isConnected && (
               <Button variant="outline" size="sm" onClick={onReconnect}>
-                <ReloadIcon className="w-4 h-4" />
+                <ReloadIcon className="w-4 h-4 mr-1" />
                 Reconnect
               </Button>
             )}
@@ -47,9 +51,10 @@ export function Header({ status, onReconnect, onStartRecording }: HeaderProps) {
               size="sm"
               onClick={onStartRecording}
               disabled={!isConnected}
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              <SpeakerLoudIcon className="w-4 h-4" />
-              Start Recording
+              <SpeakerLoudIcon className="w-4 h-4 mr-1" />
+              {isConnected ? 'Recording...' : 'Start Recording'}
             </Button>
           </div>
         </div>
